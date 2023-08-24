@@ -136,7 +136,7 @@ def gail_train(args, id):
     obs_eval = x[args.test, id, :, :5]
 
     goal_pred = np.mean(x[:n_train_tasks, id, -1, :2], axis=0)
-    np.save(f'gail/trained_data/goal{id}.npy', goal_pred)
+    np.save(f'{args.result_path}goal{id}.npy', goal_pred)
 
     res = []
     for t in range(n_steps):
@@ -154,7 +154,7 @@ def gail_train(args, id):
         res.append(p_t)
 
     # shape: (trajectory length + 1, trajectory length, # predictions, 2)
-    np.save(f'gail/trained_data/res{id}.npy', res)
+    np.save(f'{args.result_path}res{id}.npy', res)
     
 if __name__ == "__main__":
 

@@ -6,6 +6,7 @@ from gail.visualize import visualize
 
 import shutil
 import glob
+import os
 
 
 def parse():
@@ -30,6 +31,7 @@ def parse():
     parser.add_argument('--test', type=int, default=-1, help='index of test evaluation trajectory')
     parser.add_argument('--is_scale', action='store_true', help='if train with scaled data or not')
     parser.add_argument('--s', type=bool, default=True, help='if scale from 0 to 1')
+    parser.add_argument('--result_path', default= 'gail/trained_data/')
     args = parser.parse_args()
     return args
 
@@ -53,6 +55,8 @@ if __name__ == "__main__":
 
     else:
         # gail train
+        if not os.path.exists(args.result_path):
+            os.makedirs(args.result_path)
         for id in range(3):
             gail_train(args, id)
 
