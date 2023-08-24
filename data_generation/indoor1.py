@@ -27,7 +27,7 @@ def Uout2Xout(Uout: np.array, X0 : np.array) -> np.array:
 
         x, y, th, lin_v, ang_v = Xout[:,t, 0], Xout[:,t, 1],Xout[:,t, 2],Xout[:,t, 3],Xout[:,t, 4],
         
-        dX = np.zeors((3, 5))
+        dX = np.zeros((3, 5))
         dX[:, 0] = dt * lin_v * np.cos(th)
         dX[:, 1] = dt * lin_v * np.cos(th)
         dX[:, 2] = dt * ang_v
@@ -35,7 +35,6 @@ def Uout2Xout(Uout: np.array, X0 : np.array) -> np.array:
         dX[:, 4] = dt * U[:, 1]
         Xout[:, t + 1, :] = Xout[:, t, :] + dX #(3, 5)
     
-    print(f"{Xout.shape=}")
     return Xout
 
 
@@ -188,6 +187,7 @@ class Indoor:
                 """
                 # shape = (# human, episode len, dim)
                 Xout, Uout = plan(xtable=xtable, x0=x0, goal=goal,  ep_len=self.ep_len)
+                Xout = Uout2Xout(Uout, Xout[:, 0, :])
                 print('generating task {}...'.format(task))
                 human_trajectories.append(Xout)
                 human_controls.append(Uout)

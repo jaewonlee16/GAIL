@@ -17,6 +17,7 @@ T = 10      # length of planning horizon
 nvar = (nx + nu) * N_human
 dt = 0.1
 
+NOISE_LENGTH = 10
 
 
 
@@ -234,8 +235,18 @@ def plan(xtable, x0, goal, ep_len):
                 Uout1[j, k, :] = temp[j * nu: (j + 1) * nu]
 
 
+        # generate noise
+        if  t < NOISE_LENGTH:
+            noise = np.random.normal(0, 0.1, (3, 2))
+            # noise[:, 0] = 0
+        else:
+            noise = 0
+
         Xout[:, t + 1, :] = Xout1[:, 1, :]
-        Uout[:, t, :] = Uout1[:, 0, :]
+        Uout[:, t, :] = Uout1[:, 0, :] + noise
+        # boundary
+        Uout[:, t, 0] = np.clip(Uout[:, t, 0], acc_lb[0], acc_ub[0])
+        Uout[:, t, 1] = np.clip(Uout[:, t, 1], acc_lb[1], acc_ub[1])
 
         # updatePlots(Xout, human_rad, i)
         # print("updated")
