@@ -51,9 +51,10 @@ if __name__ == "__main__":
         for file in glob.glob('data_generation/data/*.npy'):
             shutil.move(file, 'gail')
 
-    # gail train
-    for id in range(3):
-        gail_train(args, id)
+    else:
+        # gail train
+        for id in range(3):
+            gail_train(args, id)
 
-    # visualize
-    visualize(args)
+        # visualize
+        visualize(args)
