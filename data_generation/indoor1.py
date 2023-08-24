@@ -12,6 +12,32 @@ import itertools
 import argparse
 from .build_solver import plan
 
+def Uout2Xout(Uout: np.array, X0 : np.array) -> np.array:
+    """
+    input : Uout (3, 200, 2)
+            X0 (3, 5)
+    output: Xout (3, 201, 5)
+    """
+    dt = 0.1
+    Xout = np.zeros((3, 201, 5))
+    Xout[:, 0, :] = X0
+
+    for t in range(200):
+        U = Uout[:, t, :] # (3, 2)
+
+        x, y, th, lin_v, ang_v = Xout[:,t, 0], Xout[:,t, 1],Xout[:,t, 2],Xout[:,t, 3],Xout[:,t, 4],
+        
+        dX = np.zeors((3, 5))
+        dX[:, 0] = dt * lin_v * np.cos(th)
+        dX[:, 1] = dt * lin_v * np.cos(th)
+        dX[:, 2] = dt * ang_v
+        dX[:, 3] = dt * U[:, 0]
+        dX[:, 4] = dt * U[:, 1]
+        Xout[:, t + 1, :] = Xout[:, t, :] + dX #(3, 5)
+    
+    print(f"{Xout.shape=}")
+    return Xout
+
 
 class Indoor:
     def __init__(self,
