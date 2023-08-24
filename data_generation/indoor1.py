@@ -29,7 +29,7 @@ def Uout2Xout(Uout: np.array, X0 : np.array) -> np.array:
         
         dX = np.zeros((3, 5))
         dX[:, 0] = dt * lin_v * np.cos(th)
-        dX[:, 1] = dt * lin_v * np.cos(th)
+        dX[:, 1] = dt * lin_v * np.sin(th)
         dX[:, 2] = dt * ang_v
         dX[:, 3] = dt * U[:, 0]
         dX[:, 4] = dt * U[:, 1]
