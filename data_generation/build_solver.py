@@ -18,6 +18,7 @@ nvar = (nx + nu) * N_human
 dt = 0.1
 
 NOISE_LENGTH = 10
+STD = 0.2
 
 
 
@@ -237,7 +238,7 @@ def plan(xtable, x0, goal, ep_len):
 
         # generate noise
         if  t < NOISE_LENGTH:
-            noise = np.random.normal(0, 0.1, (3, 2))
+            noise = np.random.normal(0, STD, (3, 2))
             # noise[:, 0] = 0
         else:
             noise = 0
