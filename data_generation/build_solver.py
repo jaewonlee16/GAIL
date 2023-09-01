@@ -17,8 +17,8 @@ T = 10      # length of planning horizon
 nvar = (nx + nu) * N_human
 dt = 0.1
 
-NOISE_LENGTH = 10
-STD = 0.2
+NOISE_LENGTH = 5
+STD = 0.1
 
 
 
