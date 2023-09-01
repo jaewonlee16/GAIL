@@ -6,6 +6,7 @@
 *.npy
 
 # human motion generation
+data_generation/Human_Motion_Gen/
 Human_Motion_Gen/
 *.c
 *.h
