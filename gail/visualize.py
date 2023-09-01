@@ -59,7 +59,7 @@ def visualize(args):
     ax.set_yticks([])
     
     real_trajs = []
-    for _ in range(3):
+    for _ in range(humans.shape[1]):
         # ongoing trajectories of dynamic obstacles
         line, = ax.plot([], [], linestyle='dashed', linewidth=2, color='tab:grey', zorder=1)
         real_trajs.append(line)
@@ -67,7 +67,7 @@ def visualize(args):
         
         
     # tables
-    for i in range(4):
+    for i in range(tables.shape[1]):
         obstacle = plt.Circle(table_pos[i],
                               .3,
                               ec=(0., 0., 0., 0.5),
@@ -112,7 +112,7 @@ def visualize(args):
                         p_fig.remove()
                         prev_people.remove(p_fig)
                     
-        for i in range(3):
+        for i in range(humans.shape[1]):
             
             p_fig = ax.add_artist(plt.Circle(humans[task, i, t],
                                              .18, ec=(0., 0., 0., 0.5),
