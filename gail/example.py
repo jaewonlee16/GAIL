@@ -58,7 +58,7 @@ def generate_predictions(args, n_predictions: int, obs: np.ndarray, goal_predict
 
 
 
-def gail_train(args, id):
+def gail_train(args, id = 0):
 
     rng = np.random.default_rng(0)
 
@@ -100,11 +100,12 @@ def gail_train(args, id):
     u_min = np.min(u)
     u_max = np.max(u)
     scaled_u = scaler.scale_u(u, args.is_scale,u_min, u_max)
-    for i in range(n_train_tasks):
-        obs = x[i, id, :, :]
-        acts = scaled_u[i, id, :, :]
-        t = Trajectory(obs, acts, None, False)
-        rollouts.append(t)
+    for id in range(n_obs):    
+        for i in range(n_train_tasks):
+            obs = x[i, id, :, :]
+            acts = scaled_u[i, id, :, :]
+            t = Trajectory(obs, acts, None, False)
+            rollouts.append(t)
 
 
     venv = make_vec_env("Pedestrian-v0", n_envs=8, rng=rng)
@@ -131,30 +132,31 @@ def gail_train(args, id):
     # print("Rewards:", rewards)
 
 
-    x = original_x
-    # shape: (trajectory length + 1, 5)
-    obs_eval = x[args.test, id, :, :5]
+    for id in range(n_obs):
+        x = original_x
+        # shape: (trajectory length + 1, 5)
+        obs_eval = x[args.test, id, :, :5]
 
-    goal_pred = np.mean(x[:n_train_tasks, id, -1, :2], axis=0)
-    np.save(f'{args.result_path}goal{id}.npy', goal_pred)
+        goal_pred = np.mean(x[:n_train_tasks, id, -1, :2], axis=0)
+        np.save(f'{args.result_path}goal{id}.npy', goal_pred)
 
-    res = []
-    for t in range(n_steps):
-        obs_t = obs_eval[t]
-        p_t = generate_predictions(n_predictions=10, 
-                                   obs=obs_t, 
-                                   goal_prediction=goal_pred, 
-                                   learner=learner, 
-                                   n_steps=n_steps, 
-                                   dt = env.dt,
-                                   args = args,
-                                   u_min=u_min,
-                                   u_max=u_max
-                                   )
-        res.append(p_t)
+        res = []
+        for t in range(n_steps):
+            obs_t = obs_eval[t]
+            p_t = generate_predictions(n_predictions=10, 
+                                       obs=obs_t, 
+                                       goal_prediction=goal_pred, 
+                                       learner=learner, 
+                                       n_steps=n_steps, 
+                                       dt = env.dt,
+                                       args = args,
+                                        u_min=u_min,
+                                        u_max=u_max
+                                    )
+            res.append(p_t)
 
-    # shape: (trajectory length + 1, trajectory length, # predictions, 2)
-    np.save(f'{args.result_path}res{id}.npy', res)
+        # shape: (trajectory length + 1, trajectory length, # predictions, 2)
+        np.save(f'{args.result_path}res{id}.npy', res)
     
 if __name__ == "__main__":
 

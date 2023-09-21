@@ -57,8 +57,8 @@ if __name__ == "__main__":
         # gail train
         if not os.path.exists(args.result_path):
             os.makedirs(args.result_path)
-        for id in range(3):
-            gail_train(args, id)
+        
+        gail_train(args)
 
         # visualize
         visualize(args)
