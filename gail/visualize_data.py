@@ -1,5 +1,5 @@
-
 import numpy as np
+
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, writers, MovieWriter
 import matplotlib.animation as animation
@@ -11,40 +11,18 @@ import argparse
 
 import datetime as dt
 import os
+import argparse
 
-def parse():
-    parser = argparse.ArgumentParser(description='video file name')
-    parser.add_argument('--epochs', default='?', type=str, help='num of epochs')
-    parser.add_argument('--lr', default='?', type= str, help='learning rate')
-    parser.add_argument('--p', default='True', type=str, help= 'probability')
-    parser.add_argument('--test', type=int, default=-1, help='test index')
-    args = parser.parse_args()
-    return args
-
-def visualize(args):
-
-    goal0 = np.load('gail/trained_data/goal0.npy')
-    goal1 = np.load('gail/trained_data/goal1.npy')
-    goal2 = np.load('gail/trained_data/goal2.npy')
-    goals = [goal0, goal1, goal2]
-    
-    predictions0 = np.load('gail/trained_data/res0.npy')
-    predictions1 = np.load('gail/trained_data/res1.npy')
-    predictions2 = np.load('gail/trained_data/res2.npy')
-    predictions = [predictions0, predictions1, predictions2]
-    
+def visualize_data(args, task = -1):
     tables = np.load('gail/static_obs_states.npy')
     humans = np.load('gail/dynamic_obs_states.npy')
-    #human_controls = np.load('gail/dynamic_obs_controls.npy')
-    
-    task = tables.shape[0] + args.test
-    
-    traj_len, pred_len, n_pred, _ = predictions[0].shape
-    
-    table_pos = tables[task, :, :]
-    trajectory = humans[task, 0, :, :]
-    
-    
+
+
+
+    # parameters
+    traj_len = 200
+    table_pos = tables[-1, :, :]
+
     path = '~/anaconda3/bin/ffmpeg'
     plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
     writer = writers['ffmpeg'](fps=10)
@@ -69,39 +47,21 @@ def visualize(args):
     # tables
     for i in range(tables.shape[1]):
         obstacle = plt.Circle(table_pos[i],
-                              .3,
+                              args.table_radii/2,
                               ec=(0., 0., 0., 0.5),
                               fc=(0., 0., 1., 0.5),
                               lw=2,
                               )
         ax.add_artist(obstacle)
     
-    #goals
-    for g in goals:
-         goal = plt.Circle(g, .1)
-         ax.add_artist(goal)
+
     
     
     timestep = ax.text(2.5, -3.2, '', fontsize=15)
-    
-    pred_trajs0 = []
-    for _ in range(n_pred):
-        line, = ax.plot([], [], linestyle='solid', linewidth=2, color='tab:red', alpha=0.2, zorder=1)
-        pred_trajs0.append(line)
-        
-    pred_trajs1 = []
-    for _ in range(n_pred):
-        line, = ax.plot([], [], linestyle='solid', linewidth=2, color='tab:red', alpha=0.2, zorder=1)
-        pred_trajs1.append(line)
-        
-    pred_trajs2 = []
-    for _ in range(n_pred):
-        line, = ax.plot([], [], linestyle='solid', linewidth=2, color='tab:red', alpha=0.2, zorder=1)
-        pred_trajs2.append(line)
-    
+
+
     prev_people = []
-        
-    preds = [pred_trajs0, pred_trajs1, pred_trajs2]
+
         
     def func(t):
         
@@ -120,11 +80,7 @@ def visualize(args):
                                              lw=2, zorder=2))
             prev_people.append(p_fig)
     
-        
-        for j, pred_t in enumerate(preds):
-            for i, line in enumerate(pred_t):
-                p = predictions[j]
-                line.set_data(p[t, :, i, 0], p[t, :, i, 1])
+
             
             
         
@@ -138,12 +94,20 @@ def visualize(args):
     if not os.path.exists(video_dir):
         os.makedirs(video_dir)
 
-    file_name = f'{video_dir}/traj{tables.shape[0]}_e{args.epochs}_lr{args.lr}_test{args.test}is_scale{args.is_scale}.mp4'   
+    file_name = f'{video_dir}/fast_traj{tables.shape[0]}_task{task}_lr{args.lr}_test{args.test}.mp4'   
     ani = FuncAnimation(fig=fig, func=func, frames=traj_len)
     ani.save(file_name.format(time.strftime("%m%d-%H%M%S")), writer=writer, dpi=100)
     
+
+def parse():
+    parser = argparse.ArgumentParser(description= 'enter options')
+    parser.add_argument('--table_radii', required=False, default=0.5, type=float)
+
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == "__main__":
-    args = parse()
-    
-    
-                                                
+    args = parse()  
+    for task in [-3, -4, -5]:
+        visualize_data(args, task)

@@ -1,8 +1,9 @@
 # export PYTHONPATH="/home/core/forces_pro_client":$PYTHONPATH
 import argparse
 from gail.example import gail_train
-from data_generation.indoor1 import Indoor
+from data_generation.indoor import Indoor
 from gail.visualize import visualize
+from gail.visualize_data import visualize_data
 
 import shutil
 import glob
@@ -52,6 +53,9 @@ if __name__ == "__main__":
         
         for file in glob.glob('data_generation/data/*.npy'):
             shutil.move(file, 'gail')
+
+        for task in [-1, -2, -3]:
+            visualize_data(args, task)
 
     else:
         # gail train

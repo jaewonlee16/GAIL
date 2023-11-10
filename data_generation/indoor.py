@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List
-from components import Body, Table, Human, Wall
+from .components import Body, Table, Human, Wall
 from os import path
 import os
 import itertools
@@ -10,7 +10,7 @@ from matplotlib.patches import Rectangle
 import matplotlib.image as img
 import itertools
 import argparse
-from build_solver import plan
+from .build_solver import plan
 
 
 class Indoor:
@@ -21,12 +21,11 @@ class Indoor:
                  table_radii,
                  human_radii,
                  robot_rad,
-                 probability,
                  ep_len=250,
                  dt=0.1
                  ):
 
-        self.probability = probability
+
         # number of tasks to generate
         # to reduce the computational burden, we generate multiple scenarios in advance, and sample tasks from these
         self.dt = dt
@@ -108,8 +107,8 @@ class Indoor:
 
                 xtable = []
 
-                table_pos_ub = [np.array([1.5, 2.5]), np.array([1.5, -1.0]), np.array([-1., -1.]), np.array([-1., 2.5])]
-                table_pos_lb = [np.array([1., 1.]), np.array([1., -2.5]), np.array([-1.5, -2.2]), np.array([-1.5, 1.])]
+                table_pos_ub = [np.array([.9, 1.5]), np.array([1.5, -1.0]), np.array([-1., -1.]), np.array([-0.5, 1.5])]
+                table_pos_lb = [np.array([.7, 1.]), np.array([1., -2.5]), np.array([-1.5, -2.2]), np.array([-.7, 1.])]
 
                 
                 xtable = np.array([(ub - lb) * np.random.rand(2) + lb for lb, ub in zip(table_pos_lb, table_pos_ub)])
@@ -120,24 +119,20 @@ class Indoor:
                 #G###
                 #####
 
-                start_pos_lb = [np.array([-0.5, 1.7]), np.array([1.0, -0.5]), np.array([-2.0, -0.5])]
-                start_pos_ub = [np.array([0.5, 2.7]), np.array([1.5, 0.5]), np.array([-1.5, 0.5])]
+                start_pos_lb = [np.array([-0.1, 2.5]), np.array([2.0, 0.1]), np.array([-2.0, -3])]
+                start_pos_ub = [np.array([0.0, 2.9]), np.array([2.5, 0.2]), np.array([-1.5, -2.5])]
 
 
                 # goal_pos_lb = [np.array([-0.5, -3.0]), np.array([-2.0, -0.5]), np.array([1.0, -0.5])]
                 # goal_pos_ub = [np.array([0.5, -2.4]), np.array([-1.5, 0.5]), np.array([1.5, 0.5])]
-                goal_pos_lb = [np.array([1.0, -0.5]), np.array([-0.5, -3.0]), np.array([1.0, -0.5])]
-                goal_pos_ub = [np.array([1.5, 0.5]), np.array([0.5, -2.4]), np.array([1.5, 0.5])]
+                goal_pos_lb = [np.array([1.2, -0.5]), np.array([2.0, -1.5]), np.array([2, -3])]
+                goal_pos_ub = [np.array([1.3, 0]), np.array([2.5, -1]), np.array([2.5, -2.5])]
                 
                
-                
-                indexes = [i if np.random.rand(1) < self.probability else i - 1 for i in range(3)]
-                #print(indexes)
+
 		
                 start1, start2, start3 = [lb + (ub - lb) * np.random.rand(2) for lb, ub in zip(start_pos_lb, start_pos_ub)]
-                #goal1, goal2, goal3 = [lb + (ub - lb) * np.random.rand(2) for lb, ub in zip(goal_pos_lb, goal_pos_ub)]
-                goals = [lb + (ub - lb) * np.random.rand(2) for lb, ub in zip(goal_pos_lb, goal_pos_ub)]
-                goal1, goal2, goal3 = [goals[i] for i in indexes]
+                goal1, goal2, goal3 = [lb + (ub - lb) * np.random.rand(2) for lb, ub in zip(goal_pos_lb, goal_pos_ub)]
 
 
                 x0 = np.array([

@@ -41,16 +41,17 @@ def generate_predictions(args, n_predictions: int, obs: np.ndarray, goal_predict
         scaled_a, _, _ = learner.policy(scaled_o)
         a = scaler.inverse_u(scaled_a, args.is_scale,u_min, u_max)
         # print(a.shape)
-        x, y, th, lin_v, ang_v, x_goal, y_goal = o[:, 0], o[:, 1], o[:, 2], o[:, 3], o[:, 4], o[:, 5], o[:, 6]
+        #x, y, th, lin_v, ang_v, x_goal, y_goal = o[:, 0], o[:, 1], o[:, 2], o[:, 3], o[:, 4], o[:, 5], o[:, 6]
+        x, y, th, lin_v, ang_v, vpref, x_goal, y_goal = o[:, 0], o[:, 1], o[:, 2], o[:, 3], o[:, 4], o[:, 5], o[:, 6], o[:, 7]
         lin_a, ang_a = a[:, 0], a[:, 1]
-        x_next = x + dt * lin_v * torch.cos(th) 
+        x_next = x + dt * lin_v * torch.cos(th)
         y_next = y + dt * lin_v * torch.sin(th)
         th_next = th + dt * ang_v
         th_next = (th_next + np.pi) % (2 * np.pi) - np.pi #th_next normalization
                                               #theta must be in range [-pi, pi]
-        lin_v_next = torch.clamp(lin_v + dt * lin_a, 0, .16)
+        lin_v_next = torch.clamp(lin_v + dt * lin_a, 0, .56)
         ang_v_next = torch.clamp(ang_v + dt * ang_a, -.5, .5)
-        o = torch.stack([x_next, y_next, th_next, lin_v_next, ang_v_next, x_goal, y_goal], dim=-1)
+        o = torch.stack([x_next, y_next, th_next, lin_v_next, ang_v_next, vpref, x_goal, y_goal], dim=-1)
         
 
     return np.array(predictions)
@@ -80,14 +81,15 @@ def gail_train(args, id = 0):
     )
     """
     rollouts = []
-    x = np.load('gail/dynamic_obs_states.npy')
+    x = np.load('gail/vpref_noise_dynamic_obs_states.npy')
 
     # u = np.load('dynamic_obs_controls.npy')
-    u = (x[:, :, 1:, 3:] - x[:, :, :-1, 3:]) / env.dt
+    
+    u = (x[:, :, 1:, 3:-1] - x[:, :, :-1, 3:-1]) / env.dt # x[:, :, :, -1] is vpref
     #print(env.dt)
     n_tasks, n_obs, n_steps, n_dim = x.shape
     x_goal = np.tile(x[:, :, -1:, :2], (1, 1, n_steps, 1))
-    x = np.concatenate([x, x_goal], axis=-1)
+    x = np.concatenate([x, x_goal], axis=-1) # x,y, theta, linv, angv, vpref, goalx, goaly
     #print(n_tasks)
     n_train_tasks = round(n_tasks * 0.9)
     n_eval_tasks = n_tasks - n_train_tasks
@@ -105,6 +107,7 @@ def gail_train(args, id = 0):
             obs = x[i, id, :, :]
             acts = scaled_u[i, id, :, :]
             t = Trajectory(obs, acts, None, False)
+            #print(f"{t=}")
             rollouts.append(t)
 
 
@@ -139,8 +142,13 @@ def gail_train(args, id = 0):
 
         goal_pred = np.mean(x[:n_train_tasks, id, -1, :2], axis=0)
         np.save(f'{args.result_path}goal{id}.npy', goal_pred)
-
+        
         res = []
+
+        # adding vpref to goal_pred at test time
+        vpref_estimate = np.mean(x[args.test, id, 5:15, 3]) # estimate timestep from 5 to 15
+        goal_pred = np.concatenate([vpref_estimate, goal_pred], axis=None)
+        
         for t in range(n_steps):
             obs_t = obs_eval[t]
             p_t = generate_predictions(n_predictions=10, 
