@@ -81,7 +81,7 @@ def gail_train(args, id = 0):
     )
     """
     rollouts = []
-    x = np.load('gail/vpref_noise_dynamic_obs_states.npy')
+    x = np.load('gail/vpref_dynamic_obs_states.npy')
 
     # u = np.load('dynamic_obs_controls.npy')
     
@@ -155,7 +155,7 @@ def gail_train(args, id = 0):
                                        obs=obs_t, 
                                        goal_prediction=goal_pred, 
                                        learner=learner, 
-                                       n_steps=n_steps, 
+                                       n_steps=n_steps//3, 
                                        dt = env.dt,
                                        args = args,
                                         u_min=u_min,
