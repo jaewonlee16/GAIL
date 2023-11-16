@@ -96,7 +96,7 @@ class Indoor:
             human_trajectories = []
             human_controls = []
             table_positions = []
-            np.random.seed(20220804)
+            #np.random.seed(20220804)
 
             for task in range(self.num_tasks):
                 ######
@@ -125,15 +125,20 @@ class Indoor:
 
                 # goal_pos_lb = [np.array([-0.5, -3.0]), np.array([-2.0, -0.5]), np.array([1.0, -0.5])]
                 # goal_pos_ub = [np.array([0.5, -2.4]), np.array([-1.5, 0.5]), np.array([1.5, 0.5])]
-                goal_pos_lb = [np.array([1.2, -0.5]), np.array([2.0, -1.5]), np.array([2, -3])]
-                goal_pos_ub = [np.array([1.3, 0]), np.array([2.5, -1]), np.array([2.5, -2.5])]
+                goal_pos_lb = [np.array([-1.2, -0.5]), np.array([0, -0.5]), np.array([1.2, -0.5]), np.array([2.0, -1.5]), np.array([2, -3])]
+                goal_pos_ub = [np.array([-1.1, 0]), np.array([0.1, 0]), np.array([1.3, 0]), np.array([2.5, -1]), np.array([2.5, -2.5])]
                 
                
 
 		
                 start1, start2, start3 = [lb + (ub - lb) * np.random.rand(2) for lb, ub in zip(start_pos_lb, start_pos_ub)]
-                goal1, goal2, goal3 = [lb + (ub - lb) * np.random.rand(2) for lb, ub in zip(goal_pos_lb, goal_pos_ub)]
-
+                goalA, goalB, goalC, goal2, goal3 = [lb + (ub - lb) * np.random.rand(2) for lb, ub in zip(goal_pos_lb, goal_pos_ub)]
+		
+		# choose goal1 from goalA, goalB, goalC
+                probA, probB, probC = [0.5, 0.2, 0.3]
+                prob = np.random.rand()
+                #print(f"{task=}: {prob=}")
+                goal1 = goalA if prob < probA else (goalB if (prob < probA + probB) else goalC)
 
                 x0 = np.array([
                     np.concatenate([start1, np.array([-np.pi / 2., 0., 0., ])]),
@@ -141,13 +146,16 @@ class Indoor:
                     np.concatenate([start2, np.array([-0.75 * np.pi, 0., 0., ])]),
                     np.concatenate([start3, np.array([0., 0., 0., ])]),
                     ])
-
+                    
+                x0_one = np.array([np.concatenate([start1, np.array([-np.pi / 2., 0., 0.])])])
 
                 goal = np.array([
                     np.concatenate([goal1, np.array([-np.pi / 2., 0., 0., ])]),
                     np.concatenate([goal2, np.array([np.pi / 2., 0., 0., ])]),
                     np.concatenate([goal3, np.array([0., 0., 0., ])]),
                     ])
+
+                goal_one = np.array([np.concatenate([goal1, np.array([-np.pi / 2., 0., 0.])])])
                 """
                 x_start = 2.4 * np.random.rand() - 1.2
                 x_goal = 2.4 * np.random.rand() - 1.2
@@ -166,7 +174,7 @@ class Indoor:
                 ])
                 """
                 # shape = (# human, episode len, dim)
-                Xout, Uout = plan(xtable=xtable, x0=x0, goal=goal,  ep_len=self.ep_len)
+                Xout, Uout = plan(xtable=xtable, x0=x0_one, goal=goal_one,  ep_len=self.ep_len)
                 print('generating task {}...'.format(task))
                 human_trajectories.append(Xout)
                 human_controls.append(Uout)

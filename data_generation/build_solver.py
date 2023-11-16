@@ -9,7 +9,7 @@ import os.path
 
 nx = 5      # (x, y, theta, v, w)
 nu = 2
-N_human = 3
+N_human = 1
 N_table = 4
 ny = 2
 T = 40      # length of planning horizon
@@ -244,7 +244,7 @@ def plan(xtable, x0, goal, ep_len):
             noise = 0
 
         Xout[:, t + 1, :] = Xout1[:, 1, :]
-        Uout[:, t, :] = Uout1[:, 0, :] + noise
+        Uout[:, t, :] = Uout1[:, 0, :] #+ noise
         # boundary
         Uout[:, t, 0] = np.clip(Uout[:, t, 0], acc_lb[0], acc_ub[0])
         Uout[:, t, 1] = np.clip(Uout[:, t, 1], acc_lb[1], acc_ub[1])
