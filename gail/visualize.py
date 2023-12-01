@@ -8,6 +8,7 @@ from matplotlib.patches import Wedge
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from itertools import chain
 import argparse
+import matplotlib.patches as patches
 
 import datetime as dt
 import os
@@ -26,7 +27,7 @@ def visualize(args):
     goal0 = np.load('gail/trained_data/goal0.npy')
     goal1 = np.load('gail/trained_data/goal1.npy')
     goal2 = np.load('gail/trained_data/goal2.npy')
-    goals = [goal0, goal1, goal2]
+    goals = [goal0] #, goal1, goal2]    --> bayesian
     
     predictions0 = np.load('gail/trained_data/res0.npy')
     predictions1 = np.load('gail/trained_data/res1.npy')
@@ -79,7 +80,7 @@ def visualize(args):
     #goals
     for g in goals:
          goal = plt.Circle(g, .1)
-         ax.add_artist(goal)
+         #ax.add_artist(goal)
     
     
     timestep = ax.text(2.5, -3.2, '', fontsize=15)
@@ -101,10 +102,15 @@ def visualize(args):
     
     prev_people = []
         
-    preds = [pred_trajs0, pred_trajs1, pred_trajs2]
+    preds = [pred_trajs0] #, pred_trajs1, pred_trajs2]      --> bayesian
         
+    bayesian_goal = np.load('result_goal.npy')
+
+    prev_goals = []
+
     def func(t):
         
+
         for i, line in enumerate(real_trajs):
             line.set_data(humans[task, i, t:, 0], humans[task, i, t:, 1])
         
@@ -125,8 +131,18 @@ def visualize(args):
             for i, line in enumerate(pred_t):
                 p = predictions[j]
                 line.set_data(p[t, :, i, 0], p[t, :, i, 1])
+
+
+        for goal_fig in list(prev_goals):
+             goal_fig.remove()
+             prev_goals.remove(goal_fig)
             
-            
+        g = bayesian_goal[t]
+        goal = plt.Circle(g, .2)
+
+        
+        goal_fig = ax.add_artist(goal)
+        prev_goals.append(goal_fig)
         
         timestep.set_text('t = {:.2f}sec'.format(t * .1))
         

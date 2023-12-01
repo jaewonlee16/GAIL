@@ -30,9 +30,32 @@ def parse():
 
 
 
-def generate_predictions(args, n_predictions: int, obs: np.ndarray, goal_prediction: np.ndarray, learner, n_steps, u_min, u_max, dt = 0.1):
+def generate_predictions(args, n_predictions: int, obs: np.ndarray, goal_prediction: np.ndarray, learner, n_steps, u_min, u_max, goals_prob, dt = 0.1):
     # return shape: (trajectory length, # predictions, 2)
     predictions = []
+
+    # bayesian
+    goals_pos = np.array([[-1.15, -0.25], [0.05, -0.25], [1.25, -0.25]])
+    pr_pi = np.zeros(3)
+    action = [0, 0, 0]
+
+
+    for i, goal_pos in enumerate(goals_pos):
+
+        o = torch.tensor(np.tile(np.concatenate([obs, goal_pos]), (n_predictions, 1)), dtype=torch.float32).to('cuda:0')
+        action_torch, value, log_prob = learner.policy(o)
+        #action[i] = np.array(action_torch.detach().cpu())
+        log_prob = np.array(log_prob.detach().cpu())
+        pr_pi[i] = np.exp(log_prob.mean())
+        
+
+    numerator = pr_pi * goals_prob
+    denominator = np.sum(numerator)
+    goals_prob = numerator / denominator
+
+    #a = action[np.argmax(goals_prob)]
+
+    goal_prediction = goals_pos[np.argmax(goals_prob)]
     o = torch.tensor(np.tile(np.concatenate([obs, goal_prediction]), (n_predictions, 1)), dtype=torch.float32).to('cuda:0')
     for _ in range(n_steps):
         predictions.append(o[:, :2].detach().cpu().numpy())
@@ -49,12 +72,12 @@ def generate_predictions(args, n_predictions: int, obs: np.ndarray, goal_predict
         th_next = th + dt * ang_v
         th_next = (th_next + np.pi) % (2 * np.pi) - np.pi #th_next normalization
                                               #theta must be in range [-pi, pi]
-        lin_v_next = torch.clamp(lin_v + dt * lin_a, 0, .56)
+        lin_v_next = torch.clamp(lin_v + dt * lin_a, 0, .16)
         ang_v_next = torch.clamp(ang_v + dt * ang_a, -.5, .5)
         o = torch.stack([x_next, y_next, th_next, lin_v_next, ang_v_next, x_goal, y_goal], dim=-1)
         
 
-    return np.array(predictions)
+    return [np.array(predictions), goals_prob, goal_prediction]
 
 
 
@@ -149,22 +172,29 @@ def gail_train(args, id = 0):
         vpref_estimate = np.mean(x[args.test, id, 5:15, 3]) # estimate timestep from 5 to 15
         goal_pred = np.concatenate([vpref_estimate, goal_pred], axis=None)
         """
+
+        goal_result = []
+        goals_prob = np.array([0.5, 0.2, 0.3]) # used for bayesian
         for t in range(n_steps):
             obs_t = obs_eval[t]
-            p_t = generate_predictions(n_predictions=10, 
+            p_t , goals_prob, goal_prediction = generate_predictions(n_predictions=10, 
                                        obs=obs_t, 
                                        goal_prediction=goal_pred, 
                                        learner=learner, 
-                                       n_steps=n_steps//2, 
+                                       n_steps=n_steps//1, 
                                        dt = env.dt,
                                        args = args,
                                         u_min=u_min,
-                                        u_max=u_max
+                                        u_max=u_max,
+                                        goals_prob=goals_prob
                                     )
             res.append(p_t)
+            goal_result.append(goal_prediction)
 
         # shape: (trajectory length + 1, trajectory length, # predictions, 2)
         np.save(f'{args.result_path}res{id}.npy', res)
+        np.save('result_goal.npy', goal_result)
+        
     
 if __name__ == "__main__":
 
